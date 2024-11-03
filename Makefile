@@ -24,20 +24,10 @@ else
   MK_ARCH="${shell echo $(CROSS_COMPILE) | sed -n 's/^[[:space:]]*\([^\/]*\/\)*\([^-]*\)-[^[:space:]]*/\2/p'}"
 endif
 unexport HOST_ARCH
-ifeq ("x86_64", $(MK_ARCH))
-  export HOST_ARCH=$(HOST_ARCH_X86_64)
-else ifneq (,$(findstring $(MK_ARCH), "i386" "i486" "i586" "i686"))
-  export HOST_ARCH=$(HOST_ARCH_X86)
-else ifneq (,$(findstring $(MK_ARCH), "aarch64" "armv8l"))
+ifneq (,$(findstring $(MK_ARCH), "aarch64" "armv8l"))
   export HOST_ARCH=$(HOST_ARCH_AARCH64)
-else ifneq (,$(findstring $(MK_ARCH), "arm" "armv7" "armv7a" "armv7l"))
-  export HOST_ARCH=$(HOST_ARCH_ARM)
-else ifeq ("riscv32", $(MK_ARCH))
-  export HOST_ARCH=$(HOST_ARCH_RISCV32)
-else ifeq ("riscv64", $(MK_ARCH))
-  export HOST_ARCH=$(HOST_ARCH_RISCV64)
 endif
-undefine MK_ARCH
+#undefine MK_ARCH
 
 # Avoid funny character set dependencies
 unexport LC_ALL

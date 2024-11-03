@@ -1,7 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0
 
-PKG="gtk+-2.0 gmodule-2.0 libglade-2.0"
+PKG="gtk+-3.0 gladeui-2.0"
 
 if [ -z "$(command -v pkg-config)" ]; then
 	echo >&2 "*"

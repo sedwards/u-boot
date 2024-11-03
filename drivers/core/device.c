@@ -518,14 +518,6 @@ int device_probe(struct udevice *dev)
 
 	dev_or_flags(dev, DM_FLAG_ACTIVATED);
 
-	if (CONFIG_IS_ENABLED(POWER_DOMAIN) && dev->parent &&
-	    (device_get_uclass_id(dev) != UCLASS_POWER_DOMAIN) &&
-	    !(drv->flags & DM_FLAG_DEFAULT_PD_CTRL_OFF)) {
-		ret = dev_power_domain_on(dev);
-		if (ret)
-			goto fail;
-	}
-
 	/*
 	 * Process pinctrl for everything except the root device, and
 	 * continue regardless of the result of pinctrl. Don't process pinctrl

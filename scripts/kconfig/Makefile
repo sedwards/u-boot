@@ -212,7 +212,7 @@ hostprogs-y	+= gconf
 gconf-objs	:= gconf.o zconf.tab.o
 
 HOSTLDLIBS_gconf = $(shell . $(obj)/.gconf-cfg && echo $$libs)
-HOSTCFLAGS_gconf.o  = $(shell . $(obj)/.gconf-cfg && echo $$cflags)
+HOSTCFLAGS_gconf.o  = $(shell . $(obj)/.gconf-cfg && echo $$cflags -Wno-deprecated-declarations)
 
 $(obj)/gconf.o: $(obj)/.gconf-cfg
 

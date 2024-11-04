@@ -189,8 +189,8 @@
     <property name="type_hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
     <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
     <signal name="destroy" handler="on_window1_destroy" object="window1"/>
-    <signal name="size_request" handler="on_window1_size_request" object="vpaned1" last_modification_time="Fri, 11 Jan 2002 16:17:11 GMT"/>
-    <signal name="delete_event" handler="on_window1_delete_event" object="window1" last_modification_time="Sun, 09 Mar 2003 19:42:46 GMT"/>
+    <!-- <signal name="size_request" handler="on_window1_size_request" object="vpaned1"/> -->
+    <!-- <signal name="delete_event" handler="on_window1_delete_event" object="window1"/> -->
     <child>
       <object class="GtkVBox" id="vbox1">
         <property name="visible">True</property>
@@ -217,7 +217,7 @@
                 <property name="visible">True</property>
                 <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
                 <property name="toolbar_style">GTK_TOOLBAR_BOTH</property>
-                <property name="tooltips">True</property>
+                <!-- <property name="tooltips">True</property> -->
                 <property name="show_arrow">True</property>
                 <child>
                   <object class="GtkToolButton" id="button1">

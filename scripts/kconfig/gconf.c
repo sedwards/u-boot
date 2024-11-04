@@ -54,7 +54,11 @@ GtkWidget *save_btn = NULL;
 GtkWidget *save_menu_item = NULL;
 
 GtkTextTag *tag1, *tag2;
-GdkColor color;
+
+//#if less than 4.0
+//GdkColor color;
+#define GtkMenuItem GMenuItem
+#define GdkWindow GtkWindow
 
 GtkTreeStore *tree1, *tree2, *tree;
 GtkTreeModel *model1, *model2;
@@ -111,6 +115,7 @@ const char *dbg_sym_flags(int val)
 	return buf;
 }
 
+#if 0
 void replace_button_icon(GtkBuilder *builder, GdkWindow *window,
                          gchar *btn_name, gchar **xpm)
 {
@@ -142,6 +147,70 @@ void replace_button_icon(GtkBuilder *builder, GdkWindow *window,
     // Release GdkPixbuf resource
     g_object_unref(pixbuf);
 }
+#endif
+
+void replace_button_icon(GtkBuilder *builder, gchar *btn_name, const gchar *icon_name)
+{
+    GtkToolButton *button;
+    GtkWidget *image;
+
+    // Get the button widget from GtkBuilder
+    button = GTK_TOOL_BUTTON(gtk_builder_get_object(builder, btn_name));
+    if (!button) {
+        g_printerr("Button '%s' not found\n", btn_name);
+        return;
+    }
+
+    // Create an image widget from an icon name
+    image = gtk_image_new_from_icon_name(icon_name, GTK_ICON_SIZE_BUTTON);
+    if (!image) {
+        g_printerr("Failed to load icon '%s'\n", icon_name);
+        return;
+    }
+
+    gtk_widget_show(image);
+    gtk_tool_button_set_icon_widget(button, image);
+}
+
+#if 0
+replace_button_icon_from_file(builder, "button4", "/path/to/single_view.png");
+replace_button_icon_from_file(builder, "button5", "/path/to/split_view.png");
+replace_button_icon_from_file(builder, "button6", "/path/to/tree_view.png");
+
+void replace_button_icon_from_file(GtkBuilder *builder, gchar *btn_name, const gchar *file_path)
+{
+    GdkPixbuf *pixbuf;
+    GtkToolButton *button;
+    GtkWidget *image;
+    GError *error = NULL;
+
+    // Load the image from a file
+    pixbuf = gdk_pixbuf_new_from_file(file_path, &error);
+    if (!pixbuf) {
+        g_printerr("Failed to load image from '%s': %s\n", file_path, error->message);
+        g_error_free(error);
+        return;
+    }
+
+    // Get the button widget from GtkBuilder
+    button = GTK_TOOL_BUTTON(gtk_builder_get_object(builder, btn_name));
+    if (!button) {
+        g_printerr("Button '%s' not found\n", btn_name);
+        g_object_unref(pixbuf);
+        return;
+    }
+
+    // Create an image widget from the GdkPixbuf and set it as the icon
+    image = gtk_image_new_from_pixbuf(pixbuf);
+    gtk_widget_show(image);
+    gtk_tool_button_set_icon_widget(button, image);
+
+    // Release GdkPixbuf resource
+    g_object_unref(pixbuf);
+}
+#endif
+
+
 
 /* Main Window Initialization */
 void init_main_window(const gchar *glade_file)
@@ -191,6 +260,12 @@ void init_main_window(const gchar *glade_file)
     replace_button_icon(builder, gtk_widget_get_window(main_wnd),
                         "button6", (gchar **) xpm_tree_view);
 */
+
+replace_button_icon(builder, "button4", "view-single"); // or another appropriate icon name
+replace_button_icon(builder, "button5", "view-split");
+replace_button_icon(builder, "button6", "view-tree");
+
+
     // Set up text buffer and tags
     txtbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_w));
     tag1 = gtk_text_buffer_create_tag(txtbuf, "mytag1",
@@ -292,8 +367,9 @@ void init_right_tree(void)
 
 	gtk_tree_view_set_model(view, model2);
 	gtk_tree_view_set_headers_visible(view, TRUE);
+#ifdef gtk2
 	gtk_tree_view_set_rules_hint(view, TRUE);
-
+#endif
 	column = gtk_tree_view_column_new();
 	gtk_tree_view_append_column(view, column);
 	gtk_tree_view_column_set_title(column, "Options");
@@ -446,7 +522,9 @@ gboolean on_window1_delete_event(GtkWidget *widget, GdkEvent *event, gpointer us
     gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_CANCEL);
 
     label = gtk_label_new("\nSave configuration?\n");
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, TRUE, TRUE, 0);
+#ifdef less_than_gtk4
+    //gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, TRUE, TRUE, 0);
+#endif
     gtk_widget_show(label);
 
     result = gtk_dialog_run(GTK_DIALOG(dialog));
@@ -459,7 +537,7 @@ gboolean on_window1_delete_event(GtkWidget *widget, GdkEvent *event, gpointer us
         case GTK_RESPONSE_CANCEL:
         case GTK_RESPONSE_DELETE_EVENT:
         default:
-            gtk_widget_destroy(dialog);
+            //gtk_widget_destroy(dialog);  Less than gtk4
             return TRUE;
     }
 

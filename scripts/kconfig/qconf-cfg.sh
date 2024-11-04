@@ -1,7 +1,8 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0
 
-PKG="Qt5Core Qt5Gui Qt5Widgets"
+PKG6="Qt6Core Qt6Gui Qt6Widgets"
+PKG5="Qt5Core Qt5Gui Qt5Widgets"
 PKG2="QtCore QtGui"
 
 if [ -z "$(command -v pkg-config)" ]; then
@@ -11,9 +12,16 @@ if [ -z "$(command -v pkg-config)" ]; then
 	exit 1
 fi
 
-if pkg-config --exists $PKG; then
+if pkg-config --exists $PKG6; then
+        echo cflags=\"-std=c++11 -fPIC $(pkg-config --cflags Qt6Core Qt6Gui Qt6Widgets)\"
+        echo libs=\"$(pkg-config --libs $PKG6)\"
+        echo moc=\"$(pkg-config --variable=host_bins Qt6Core)/moc\"
+        exit 0
+fi
+
+if pkg-config --exists $PKG5; then
 	echo cflags=\"-std=c++11 -fPIC $(pkg-config --cflags Qt5Core Qt5Gui Qt5Widgets)\"
-	echo libs=\"$(pkg-config --libs $PKG)\"
+	echo libs=\"$(pkg-config --libs $PKG5)\"
 	echo moc=\"$(pkg-config --variable=host_bins Qt5Core)/moc\"
 	exit 0
 fi
@@ -27,6 +35,6 @@ fi
 
 echo >&2 "*"
 echo >&2 "* Could not find Qt via pkg-config."
-echo >&2 "* Please install either Qt 4.8 or 5.x. and make sure it's in PKG_CONFIG_PATH"
+echo >&2 "* Please install either Qt 4.8, 5.x or 6.x and make sure it's in PKG_CONFIG_PATH"
 echo >&2 "*"
 exit 1

@@ -82,7 +82,8 @@ ENTRY(_main)
 #endif
 	add	x0, x0, #CONFIG_SYS_INIT_SP_BSS_OFFSET
 #else
-	ldr	x0, =(SYS_INIT_SP_ADDR)
+	adr	x0, __bss_start
+	//ldr	x0, =(SYS_INIT_SP_ADDR)
 #endif
 	bic	sp, x0, #0xf	/* 16-byte alignment for ABI compliance */
 	mov	x0, sp

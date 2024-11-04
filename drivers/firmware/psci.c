@@ -41,7 +41,7 @@
 #define PSCI_FN_NATIVE(version, name)	PSCI_##version##_FN_##name
 #endif
 
-#if CONFIG_IS_ENABLED(EFI_LOADER)
+#if CONFIG_IS_ENABLED(CONFIG_EFI_PARTITION)
 int __efi_runtime_data psci_method;
 #else
 int psci_method __section(".data");
@@ -244,7 +244,8 @@ static void __maybe_unused do_psci_probe(void)
 	uclass_get_device_by_name(UCLASS_FIRMWARE, DRIVER_NAME, &dev);
 }
 
-#if IS_ENABLED(CONFIG_EFI_LOADER) && IS_ENABLED(CONFIG_PSCI_RESET)
+// #if IS_ENABLED(CONFIG_EFI_PARTITION) && IS_ENABLED(CONFIG_PSCI_RESET)
+#if IS_ENABLED(CONFIG_EFI_PARTITION) 
 efi_status_t efi_reset_system_init(void)
 {
 	do_psci_probe();
@@ -266,15 +267,16 @@ void __efi_runtime EFIAPI efi_reset_system(enum efi_reset_type reset_type,
 	while (1)
 		;
 }
-#endif /* IS_ENABLED(CONFIG_EFI_LOADER) && IS_ENABLED(CONFIG_PSCI_RESET) */
+#endif /* IS_ENABLED(CONFIG_EFI_PARTITION) */
+//#endif /* IS_ENABLED(CONFIG_EFI_PARTITION) && IS_ENABLED(CONFIG_PSCI_RESET) */
 
-#ifdef CONFIG_PSCI_RESET
+//#ifdef CONFIG_PSCI_RESET
 void reset_misc(void)
 {
 	do_psci_probe();
 	invoke_psci_fn(PSCI_0_2_FN_SYSTEM_RESET, 0, 0, 0);
 }
-#endif /* CONFIG_PSCI_RESET */
+//#endif /* CONFIG_PSCI_RESET */
 
 void psci_sys_reset(u32 type)
 {

@@ -681,6 +681,7 @@ static int do_fdt(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 			return CMD_RET_USAGE;
 		}
 	}
+#if 0
 #ifdef CONFIG_OF_BOARD_SETUP
 	/* Call the board-specific fixup routine */
 	else if (strncmp(argv[1], "boa", 3) == 0) {
@@ -695,6 +696,7 @@ static int do_fdt(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		ft_board_setup_ex(working_fdt, gd->bd);
 #endif
 	}
+#endif
 #endif
 	/* Create a chosen node */
 	else if (strncmp(argv[1], "cho", 3) == 0) {

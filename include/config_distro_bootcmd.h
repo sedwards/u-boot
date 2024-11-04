@@ -71,8 +71,6 @@
 #define BOOTENV_SHARED_MMC
 #define BOOTENV_DEV_MMC \
 	BOOT_TARGET_DEVICES_references_MMC_without_CONFIG_CMD_MMC
-#define BOOTENV_DEV_NAME_MMC \
-	BOOT_TARGET_DEVICES_references_MMC_without_CONFIG_CMD_MMC
 #endif
 
 #ifdef CONFIG_CMD_UBIFS
@@ -471,10 +469,10 @@
 #define BOOTENV_SHARED_EXTENSION
 #endif
 
-#define BOOTENV_DEV_NAME(devtypeu, devtypel, instance, ...) \
+/* #define BOOTENV_DEV_NAME(devtypeu, devtypel, instance, ...) \
 	BOOTENV_DEV_NAME_##devtypeu(devtypeu, devtypel, instance, ## __VA_ARGS__)
 #define BOOTENV_BOOT_TARGETS \
-	"boot_targets=" BOOT_TARGET_DEVICES(BOOTENV_DEV_NAME) "\0"
+	"boot_targets=" BOOT_TARGET_DEVICES(BOOTENV_DEV_NAME) "\0" */
 
 #define BOOTENV_DEV(devtypeu, devtypel, instance, ...) \
 	BOOTENV_DEV_##devtypeu(devtypeu, devtypel, instance, ## __VA_ARGS__)
@@ -494,7 +492,7 @@
 	"boot_prefixes=/ /boot/\0" \
 	"boot_scripts=boot.scr.uimg boot.scr\0" \
 	"boot_script_dhcp=boot.scr.uimg\0" \
-	BOOTENV_BOOT_TARGETS \
+/*	BOOTENV_BOOT_TARGETS \
 	\
 	"boot_syslinux_conf=extlinux/extlinux.conf\0" \
 	"boot_extlinux="                                                  \
@@ -562,5 +560,5 @@
 		"for target in ${boot_targets}; do "                      \
 			"run bootcmd_${target}; "                         \
 		"done\0"
-
+*/
 #endif  /* _CONFIG_CMD_DISTRO_BOOTCMD_H */

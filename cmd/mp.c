@@ -12,13 +12,13 @@ static int cpu_status_all(void)
 	unsigned long cpuid;
 
 	for (cpuid = 0; ; cpuid++) {
-		if (!is_core_valid(cpuid)) {
+		/* if (!is_core_valid(cpuid)) { */
 			if (cpuid == 0) {
 				printf("Core num: %lu is not valid\n", cpuid);
 				return 1;
 			}
 			break;
-		}
+		//}  
 		cpu_status(cpuid);
 	}
 
@@ -37,18 +37,22 @@ cpu_cmd(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		return CMD_RET_USAGE;
 
 	cpuid = dectoul(argv[1], NULL);
-	if (!is_core_valid(cpuid)) {
-		printf ("Core num: %lu is not valid\n",	cpuid);
-		return 1;
-	}
+	//if (!is_core_valid(cpuid)) {
+	//	printf ("Core num: %lu is not valid\n",	cpuid);
+	//	return 1;
+	//}
 
 	if (argc == 3) {
-		if (strncmp(argv[2], "reset", 5) == 0)
-			cpu_reset(cpuid);
+		if (strncmp(argv[2], "reset", 5) == 0){
+ 			printf("reset doesn't work");
+ 			cpu_status_all();
+		}	//cpu_reset(cpuid);
 		else if (strncmp(argv[2], "status", 6) == 0)
-			cpu_status(cpuid);
-		else if (strncmp(argv[2], "disable", 7) == 0)
-			return cpu_disable(cpuid);
+		        cpu_status_all();
+		else if (strncmp(argv[2], "disable", 7) == 0){
+ 			cpu_status_all();
+ 			printf("disable doesn't work");
+		}
 		else
 			return CMD_RET_USAGE;
 
@@ -59,8 +63,8 @@ cpu_cmd(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	if (strncmp(argv[2], "release", 7) != 0)
 		return CMD_RET_USAGE;
 
-	if (cpu_release(cpuid, argc - 3, argv + 3))
-		return CMD_RET_USAGE;
+	//if (cpu_release(cpuid, argc - 3, argv + 3))
+	//	return CMD_RET_USAGE;
 
 	return 0;
 }

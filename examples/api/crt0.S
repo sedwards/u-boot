@@ -25,14 +25,6 @@ syscall:
 	bctr
 
 #elif defined(CONFIG_ARM)
-
-	.text
-	.globl _start
-_start:
-	ldr	ip, =search_hint
-	str	sp, [ip]
-	b	main
-
 #elif defined(CONFIG_ARM64)
 
               .text

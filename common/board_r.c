@@ -87,6 +87,11 @@ __weak int cpu_secondary_init_r(void)
 	return 0;
 }
 
+__weak int misc_init_r(void)
+{
+	return 0;
+}
+
 static int initr_trace(void)
 {
 #ifdef CONFIG_TRACE

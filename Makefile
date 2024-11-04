@@ -37,7 +37,7 @@ else ifeq ("riscv32", $(MK_ARCH))
 else ifeq ("riscv64", $(MK_ARCH))
   export HOST_ARCH=$(HOST_ARCH_RISCV64)
 endif
-undefine MK_ARCH
+#undefine MK_ARCH
 
 # Avoid funny character set dependencies
 unexport LC_ALL
@@ -1072,7 +1072,7 @@ quiet_cmd_zobjcopy = OBJCOPY $@
 cmd_zobjcopy = $(OBJCOPY) $(OBJCOPYFLAGS) $(OBJCOPYFLAGS_$(@F)) $< $@
 
 quiet_cmd_efipayload = OBJCOPY $@
-cmd_efipayload = $(OBJCOPY) -I binary -O $(EFIPAYLOAD_BFDTARGET) -B $(EFIPAYLOAD_BFDARCH) $< $@
+cmd_efipayload = $(OBJCOPY) -I binary -O pei-aarch64-little  $(EFIPAYLOAD_BFDTARGET) -B aarch64 $(EFIPAYLOAD_BFDARCH) $< $@
 
 MKIMAGEOUTPUT ?= /dev/null
 
@@ -1678,7 +1678,8 @@ u-boot-app.efi: u-boot FORCE
 u-boot.bin.o: u-boot.bin FORCE
 	$(call if_changed,efipayload)
 
-u-boot-payload.lds: $(LDSCRIPT_EFI) FORCE
+############################################################################
+u-boot-payload.lds: $(LDSCRIPT_EFI)
 	$(call if_changed_dep,cpp_lds)
 
 # Rule to link the EFI payload which contains a stub and a U-Boot binary
@@ -1695,6 +1696,7 @@ OBJCOPYFLAGS_u-boot-payload.efi := $(OBJCOPYFLAGS_EFI)
 u-boot-payload.efi: u-boot-payload FORCE
 	$(call if_changed,zobjcopy)
 
+##########################################################################
 u-boot-img.bin: spl/u-boot-spl.bin u-boot.img FORCE
 	$(call if_changed,cat)
 

@@ -625,12 +625,13 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 		if (skip_board_fixup && ((int)simple_strtol(skip_board_fixup, NULL, 10) == 1)) {
 			printf("skip board fdt fixup\n");
 		} else {
-			fdt_ret = ft_board_setup(blob, gd->bd);
+			printf("skip board fdt fixup\n");
+			/* fdt_ret = ft_board_setup(blob, gd->bd);
 			if (fdt_ret) {
 				printf("ERROR: board-specific fdt fixup failed: %s\n",
 				       fdt_strerror(fdt_ret));
 				goto err;
-			}
+			}*/ 
 		}
 	}
 	if (IS_ENABLED(CONFIG_OF_SYSTEM_SETUP)) {

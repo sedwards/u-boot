@@ -118,6 +118,7 @@ obj-y += smem/
 obj-y += thermal/
 obj-$(CONFIG_TEE) += tee/
 obj-$(CONFIG_ARM_FFA_TRANSPORT) += firmware/arm-ffa/
+obj-y += firmware/efi/
 obj-y += axi/
 obj-y += ufs/
 obj-$(CONFIG_W1) += w1/

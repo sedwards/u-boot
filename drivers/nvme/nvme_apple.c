@@ -3,6 +3,7 @@
  * (C) Copyright 2021 Mark Kettenis <kettenis@openbsd.org>
  */
 
+#if 0
 #include <dm.h>
 #include <mailbox.h>
 #include <mapmem.h>
@@ -301,3 +302,7 @@ U_BOOT_DRIVER(apple_nvme) = {
 	.ops = &apple_nvme_ops,
 	.flags = DM_FLAG_OS_PREPARE,
 };
+
+#endif
+
+

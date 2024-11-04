@@ -103,6 +103,7 @@ machdirs := $(patsubst %,arch/arm/mach-%/,$(machine-y))
 PLATFORM_CPPFLAGS += $(patsubst %,-I$(srctree)/%include,$(machdirs))
 
 libs-y += $(machdirs)
+libs-$(CONFIG_EFI_STUB) += $(objtree)/drivers/firmware/efi/libstub/lib.a
 
 head-y := arch/arm/cpu/$(CPU)/start.o
 

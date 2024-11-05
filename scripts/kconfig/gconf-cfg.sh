@@ -1,7 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0
 
-PKG_GTK4="gtk4 gtk-mac-integration"
+PKG_GTK4="gtk4"
 PKG_GTK3="gtk+-3.0"
 PKG_GTK2="gtk+-2.0 gmodule-2.0 libglade-2.0"
 
@@ -14,12 +14,12 @@ if [ -z "$(command -v pkg-config)" ]; then
 fi
 
 # Check for GTK+ 4.0 first
-if pkg-config --exists $PKG_GTK4 && pkg-config --atleast-version=4.0.0 gtk4; then
-    echo "* Found GTK+ 4.0"
-    PKG_INSTALLED="$PKG_GTK4"
-
+#if pkg-config --exists $PKG_GTK4 && pkg-config --atleast-version=4.0.0 gtk4; then
+#    echo "* Found GTK+ 4.0"
+#    PKG_INSTALLED="$PKG_GTK4"
+#
 # If GTK+ 4.0 is not available, check for GTK+ 3.0
-elif pkg-config --exists $PKG_GTK3 && pkg-config --atleast-version=3.0.0 gtk+-3.0; then
+if pkg-config --exists $PKG_GTK3 && pkg-config --atleast-version=3.0.0 gtk+-3.0; then
     echo "* Found GTK+ 3.0"
     PKG_INSTALLED="$PKG_GTK3"
 

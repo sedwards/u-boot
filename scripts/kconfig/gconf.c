@@ -7,7 +7,7 @@
  */
 
 //#define GTK_DISABLE_DEPRECATED
-#define G_DISABLE_DEPRECATED 
+//#define G_DISABLE_DEPRECATED 
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -57,8 +57,7 @@ GtkWidget *save_menu_item = NULL;
 
 GtkTextTag *tag1, *tag2;
 
-//#if less than 4.0
-//GdkColor color;
+GdkColor color;
 #define GtkMenuItem GMenuItem
 #define GdkWindow GtkWindow
 
@@ -91,7 +90,7 @@ void on_confirm_overwrite_response(GtkDialog *dialog, gint response_id, gpointer
 void on_set_option_mode2_activate(GtkMenuItem *menuitem, gpointer user_data);
 void on_save_activate(GtkMenuItem * menuitem, gpointer user_data);
 void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer user_data);
-void on_window1_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data);
+gboolean on_window1_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data);
 void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer user_data);
 void on_window1_destroy(GObject *object, gpointer user_data);
 void on_window1_size_request(GtkWidget *widget, gpointer user_data);
@@ -245,7 +244,24 @@ void replace_button_icon_from_file(GtkBuilder *builder, gchar *btn_name, const g
 }
 #endif
 
+void connect_signal_callback(GtkBuilder *builder, GObject *object, const gchar *signal_name,
+                             const gchar *handler_name, GObject *connect_object, GConnectFlags flags, gpointer user_data)
+{
+    // Look up the handler function by name in the current program
+    GCallback handler = (GCallback)g_object_get_data(G_OBJECT(builder), handler_name);
+ 
+    if (handler) {
+        g_signal_connect_data(object, signal_name, handler, connect_object ? connect_object : user_data, NULL, flags);
+    } else {
+        g_warning("Handler '%s' not found for signal '%s'", handler_name, signal_name);
+    }
+}
 
+// Usage example
+void initialize_signals(GtkBuilder *builder)
+{
+    gtk_builder_connect_signals_full(builder, connect_signal_callback, NULL);
+}
 
 /* Main Window Initialization */
 void init_main_window(const gchar *glade_file)
@@ -258,9 +274,9 @@ void init_main_window(const gchar *glade_file)
     if (!builder)
         g_error("GUI loading failed!\n");
 
-    // Autoconnect signals
-    //gtk_builder_connect_signals_full(builder, NULL);
+    initialize_signals(builder);
 
+#if 0
 // Connect signals from .ui file
 widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_load"));
 g_signal_connect(widget, "activate", G_CALLBACK(on_load1_activate), NULL);
@@ -335,6 +351,7 @@ widget = GTK_WIDGET(gtk_builder_get_object(builder, "treeview2"));
 g_signal_connect(widget, "cursor_changed", G_CALLBACK(on_treeview2_cursor_changed), NULL);
 //g_signal_connect(widget, "button_press_event", G_CALLBACK(on_treeview2_button_press_event), NULL);
 g_signal_connect(widget, "key_press_event", G_CALLBACK(on_treeview2_key_press), NULL);
+#endif
 
     // Retrieve widgets
     main_wnd = GTK_WIDGET(gtk_builder_get_object(builder, "window1"));
@@ -360,7 +377,6 @@ g_signal_connect(widget, "key_press_event", G_CALLBACK(on_treeview2_key_press), 
     save_btn = GTK_WIDGET(gtk_builder_get_object(builder, "button3"));
     save_menu_item = GTK_WIDGET(gtk_builder_get_object(builder, "save1"));
     conf_set_changed_callback(conf_changed);
-
 /*
     // Replace icons using GTK3-compatible function
     replace_button_icon(builder, gtk_widget_get_window(main_wnd),
@@ -403,6 +419,7 @@ void init_tree_model(void)
 					  G_TYPE_STRING, G_TYPE_STRING,
 					  G_TYPE_STRING, G_TYPE_STRING,
 					  G_TYPE_STRING, G_TYPE_STRING,
+					  G_TYPE_POINTER, GDK_TYPE_COLOR,
 					  G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF,
 					  G_TYPE_BOOLEAN, G_TYPE_BOOLEAN,
 					  G_TYPE_BOOLEAN, G_TYPE_BOOLEAN,
@@ -416,6 +433,7 @@ void init_tree_model(void)
 				   G_TYPE_STRING, G_TYPE_STRING,
 				   G_TYPE_STRING, G_TYPE_STRING,
 				   G_TYPE_STRING, G_TYPE_STRING,
+                                   G_TYPE_POINTER, GDK_TYPE_COLOR,
 				   G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF,
 				   G_TYPE_BOOLEAN, G_TYPE_BOOLEAN,
 				   G_TYPE_BOOLEAN, G_TYPE_BOOLEAN,
@@ -432,7 +450,7 @@ void init_left_tree(void)
 
 	gtk_tree_view_set_model(view, model1);
 	gtk_tree_view_set_headers_visible(view, TRUE);
-//	gtk_tree_view_set_rules_hint(view, TRUE);
+	gtk_tree_view_set_rules_hint(view, TRUE);
 
 	column = gtk_tree_view_column_new();
 	gtk_tree_view_append_column(view, column);
@@ -612,6 +630,51 @@ static void text_insert_msg(const char *title, const char *message)
 
 /* Main Windows Callbacks */
 
+void on_save_activate(GtkMenuItem * menuitem, gpointer user_data);
+gboolean on_window1_delete_event(GtkWidget * widget, GdkEvent * event,
+                                gpointer user_data)
+{
+	GtkWidget *dialog, *label;
+	gint result;
+
+	if (!conf_get_changed())
+        	return FALSE;
+
+	dialog = gtk_dialog_new_with_buttons("Warning !",
+                                             GTK_WINDOW(main_wnd),
+                                             (GtkDialogFlags)
+                                             (GTK_DIALOG_MODAL |
+                                             GTK_DIALOG_DESTROY_WITH_PARENT),
+                                             GTK_STOCK_OK,
+                                             GTK_RESPONSE_YES,
+                                             GTK_STOCK_NO,
+                                             GTK_RESPONSE_NO,
+                                             GTK_STOCK_CANCEL,
+                                             GTK_RESPONSE_CANCEL, NULL);
+	gtk_dialog_set_default_response(GTK_DIALOG(dialog),
+                                       GTK_RESPONSE_CANCEL);
+
+	label = gtk_label_new("\nSave configuration ?\n");
+        gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label);
+
+	gtk_widget_show(label);
+
+	result = gtk_dialog_run(GTK_DIALOG(dialog));
+	switch (result) {
+	case GTK_RESPONSE_YES:
+               on_save_activate(NULL, NULL);
+               return FALSE;
+	case GTK_RESPONSE_NO:
+               return FALSE;
+	case GTK_RESPONSE_CANCEL:
+	case GTK_RESPONSE_DELETE_EVENT:
+	default:
+               gtk_widget_destroy(dialog);
+               return TRUE;
+	}
+	return FALSE;
+}
+
 // Function to handle clicks on tree view
 void on_treeview2_click(GtkGestureClass *gesture, int n_press, double x, double y, gpointer user_data)
 {
@@ -674,49 +737,41 @@ gboolean on_treeview2_key_press(GtkEventControllerKey *controller, guint keyval,
     return FALSE;
 }
 
-// Setup function to attach the gesture and key event controllers
+/* 4.0 */
+#if 0
 void setup_treeview2_event_handlers(GtkWidget *treeview)
 {
-    // Create and connect the GtkGestureClass for mouse clicks
+    // Create and connect the GtkGestureClick for mouse clicks
     GtkGesture *click_gesture = gtk_gesture_click_new();
     gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click_gesture), GDK_BUTTON_PRIMARY);
     g_signal_connect(click_gesture, "pressed", G_CALLBACK(on_treeview2_click), treeview);
-    gtk_widget_add_controller(treeview, GTK_EVENT_CONTROLLER(click_gesture));
 
-    // Create and connect the GtkEventControllerKey for key presses
-    GtkEventController *key_controller = gtk_event_controller_key_new(treeview);
-    g_signal_connect(key_controller, "key-pressed", G_CALLBACK(on_treeview2_key_press), treeview);
-    gtk_widget_add_controller(treeview, GTK_EVENT_CONTROLLER(key_controller));
+    // Set the gesture's window to the treeview's window
+    gtk_event_controller_set_propagation_phase(GTK_EVENT_CONTROLLER(click_gesture), GTK_PHASE_CAPTURE);
+    gtk_gesture_set_window(GTK_GESTURE(click_gesture), gtk_widget_get_window(treeview));
+
+    // Add necessary events for key handling on the treeview
+    gtk_widget_add_events(treeview, GDK_KEY_PRESS_MASK);
+    
+    // Connect the key-press-event directly to the widget for key handling
+    g_signal_connect(treeview, "key-press-event", G_CALLBACK(on_treeview2_key_press), treeview);
 }
+#endif
 
+void setup_treeview2_event_handlers(GtkWidget *treeview)
+{
+    // Connect the button-press-event for handling clicks
+    g_signal_connect(treeview, "button-press-event", G_CALLBACK(on_treeview2_click), treeview);
+    
+    // Add necessary events for button press and key press handling
+    gtk_widget_add_events(treeview, GDK_BUTTON_PRESS_MASK | GDK_KEY_PRESS_MASK);
+
+    // Connect the key-press-event directly for key handling
+    g_signal_connect(treeview, "key-press-event", G_CALLBACK(on_treeview2_key_press), treeview);
+}
 
 void on_save_activate(GtkMenuItem * menuitem, gpointer user_data);
 void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer user_data);
-
-void on_window1_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
-{
-    GtkWidget *dialog, *label;
-
-    if (!conf_get_changed())
-        return;
-
-    dialog = gtk_dialog_new_with_buttons("Warning!",
-                                         GTK_WINDOW(main_wnd),
-                                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                         "_Yes", GTK_RESPONSE_YES,
-                                         "_No", GTK_RESPONSE_NO,
-                                         "_Cancel", GTK_RESPONSE_CANCEL, NULL);
-    gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_CANCEL);
-
-    label = gtk_label_new("\nSave configuration?\n");
-    gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label);
-    gtk_widget_show(label);
-
-    // Connect to the response signal to handle button clicks asynchronously
-    g_signal_connect(dialog, "response", G_CALLBACK(on_dialog_response), NULL);
-
-    gtk_widget_show(dialog);
-}
 
 // Signal handler for dialog responses
 void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer user_data)
@@ -876,38 +931,41 @@ void on_confirm_overwrite_response(GtkDialog *dialog, gint response_id, gpointer
 
 void on_quit1_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-    on_window1_delete_event(GTK_WIDGET(main_wnd), NULL, NULL);  // No return value to check
+       if (!on_window1_delete_event(NULL, NULL, NULL))
+               gtk_widget_destroy(GTK_WIDGET(main_wnd));
 }
 
 void on_show_name1_activate(GtkMenuItem * menuitem, gpointer user_data)
 {
 	GtkTreeViewColumn *col;
 
-//	show_name = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
+        /* Later gtk3 and gtk4.0 */
+	show_name = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
 
-//        GtkToggleButton *toggle_button = GTK_TOGGLE_BUTTON(gtk_menu_item_get_child(GTK_MENU_ITEM(menuitem)));
-//        gboolean is_active = gtk_toggle_button_get_active(toggle_button);
-
+#if 0
+        GtkToggleButton *toggle_button = GTK_TOGGLE_BUTTON(gtk_menu_item_get_child(GTK_MENU_ITEM(menuitem)));
+        gboolean is_active = gtk_toggle_button_get_active(toggle_button);
+#endif
 
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_NAME);
-//	if (col)
-//		gtk_tree_view_column_set_visible(col, show_name);
+	if (col)
+		gtk_tree_view_column_set_visible(col, show_name);
 }
 
 void on_show_range1_activate(GtkMenuItem * menuitem, gpointer user_data)
 {
 	GtkTreeViewColumn *col;
 
-//	show_range = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
+	show_range = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_NO);
-//	if (col)
-//		gtk_tree_view_column_set_visible(col, show_range);
+	if (col)
+		gtk_tree_view_column_set_visible(col, show_range);
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_MOD);
-//	if (col)
-//		gtk_tree_view_column_set_visible(col, show_range);
+	if (col)
+		gtk_tree_view_column_set_visible(col, show_range);
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_YES);
-//	if (col)
-//		gtk_tree_view_column_set_visible(col, show_range);
+	if (col)
+		gtk_tree_view_column_set_visible(col, show_range);
 
 }
 
@@ -915,10 +973,10 @@ void on_show_data1_activate(GtkMenuItem * menuitem, gpointer user_data)
 {
 	GtkTreeViewColumn *col;
 
-//	show_value = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
+	show_value = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_VALUE);
-//	if (col)
-//		gtk_tree_view_column_set_visible(col, show_value);
+	if (col)
+		gtk_tree_view_column_set_visible(col, show_value);
 }
 
 void
@@ -1343,15 +1401,14 @@ void on_treeview1_click(GtkGestureClass *gesture, int n_press, double x, double 
     gtk_tree_path_free(path);
 }
 
-// Setup function to attach GtkGestureClass to treeview1 for click handling
 void setup_treeview1_event_handlers(GtkWidget *treeview)
 {
-    GtkGesture *click_gesture = gtk_gesture_click_new();
-    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click_gesture), GDK_BUTTON_PRIMARY);
-    g_signal_connect(click_gesture, "pressed", G_CALLBACK(on_treeview1_click), treeview);
-    gtk_widget_add_controller(treeview, GTK_EVENT_CONTROLLER(click_gesture));
-}
+    // Connect the button-press-event signal for handling mouse clicks
+    g_signal_connect(treeview, "button-press-event", G_CALLBACK(on_treeview1_click), treeview);
 
+    // Add necessary events to capture button presses
+    gtk_widget_add_events(treeview, GDK_BUTTON_PRESS_MASK);
+}
 
 /* Fill a row of strings */
 static gchar **fill_row(struct menu *menu)
@@ -1484,17 +1541,20 @@ static void set_node(GtkTreeIter * node, struct menu *menu, gchar ** row)
 	gboolean success;
 	GdkPixbuf *pix;
 
-	pix = gdk_pixbuf_new_from_xpm_data((const char **)
-					   row[COL_PIXBUF]);
+    // Attempt to load the pixbuf, checking for failure
+    pix = gdk_pixbuf_new_from_xpm_data((const char **)row[COL_PIXBUF]);
+    if (!pix) {
+        g_printerr("Failed to load pixbuf from XPM data\n");
+        return;
+    }
 
-	//gdk_color_parse(row[COL_COLOR], &color);
-
-// Define the color (example: setting to red)
-//gdk_rgba_parse(&color, "#FF0000");
+        if (!gdk_rgba_parse(&color, row[COL_COLOR])) {
+        	g_printerr("Failed to parse color\n");
+        	return;  // Handle this error appropriately
+        }
 
 // Apply the color to a widget's background (for demonstration, replace `widget` with your actual widget variable)
 //gtk_widget_override_background_color(node, GTK_STATE_FLAG_NORMAL, &color);
-
 
 	gtk_tree_store_set(tree, node,
 			   COL_OPTION, row[COL_OPTION],
@@ -1853,6 +1913,25 @@ int main(int ac, char *av[])
 static void conf_changed(void)
 {
 	bool changed = conf_get_changed();
-	//gtk_widget_set_sensitive(save_btn, changed);
-	//gtk_widget_set_sensitive(save_menu_item, changed);
+	gtk_widget_set_sensitive(save_btn, changed);
+	gtk_widget_set_sensitive(save_menu_item, changed);
 }
+
+/* 4.0 */ 
+#if 0
+void setup_treeview1_event_handlers(GtkWidget *treeview)
+{       
+    /* Create a click gesture for left mouse button */
+    GtkGesture *click_gesture = gtk_gesture_click_new();
+    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click_gesture), GDK_BUTTON_PRIMARY);
+        
+    /* Connect the gesture to the callback function */
+    g_signal_connect(click_gesture, "pressed", G_CALLBACK(on_treeview1_click), treeview);
+
+    /* Associate the gesture with the treeview widget */
+    gtk_event_controller_set_propagation_phase(GTK_EVENT_CONTROLLER(click_gesture), GTK_PHASE_CAPTURE);
+    gtk_widget_add_events(treeview, GDK_BUTTON_PRESS_MASK);
+    gtk_gesture_set_window(GTK_GESTURE(click_gesture), gtk_widget_get_window(treeview));
+}
+#endif
+

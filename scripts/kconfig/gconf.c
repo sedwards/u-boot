@@ -408,6 +408,7 @@ g_signal_connect(widget, "key_press_event", G_CALLBACK(on_treeview2_key_press), 
     // Set window title
     gtk_window_set_title(GTK_WINDOW(main_wnd), rootmenu.prompt->text);
 
+    printf("Menu and Buttons\n");
     gtk_widget_show(main_wnd);
 }
 
@@ -795,7 +796,6 @@ void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer user_data)
 
 void on_window1_destroy(GObject *object, gpointer user_data)
 {
-//    gtk_main_quit();
   g_application_quit(G_APPLICATION(app));
 }
 
@@ -1929,21 +1929,6 @@ static void on_activate(GApplication *app, gpointer user_data)
     init_tree_model();
     init_left_tree();
     init_right_tree();
-
-    /* Display view based on mode */
-    switch (view_mode) {
-    case SINGLE_VIEW:
-        display_tree_part();
-        break;
-    case SPLIT_VIEW:
-        display_list();
-        break;
-    case FULL_VIEW:
-        display_tree(&rootmenu);
-        break;
-    }
-
-    g_free(glade_file);
 }
 
 void on_open(GApplication *app, GFile **files, gint n_files, gchar *hint)
@@ -1958,14 +1943,7 @@ int main(int ac, char *av[])
     int status;
     const char *name = NULL; // Declare name at the start
 
-    // Initialize GtkApplication
-    app = gtk_application_new("org.example.gconfig", G_APPLICATION_HANDLES_OPEN);
-
-    // Connect to the open signal if files are involved
-    g_signal_connect(app, "open", G_CALLBACK(on_open), av);
-
-    // Connect to the activation signal to initialize the UI
-    g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
+    gtk_init(&ac, &av);
 
     /* Conf setup and argument handling */
     if (ac > 1 && av[1][0] == '-') {
@@ -1988,10 +1966,31 @@ int main(int ac, char *av[])
 
     conf_parse(name);
     fixup_rootmenu(&rootmenu);
-    conf_read(NULL);
 
     // Run the application
+    // Initialize GtkApplication
+    app = gtk_application_new("org.example.gconfig", G_APPLICATION_HANDLES_OPEN);
+
+    // Connect to the open signal if files are involved
+    g_signal_connect(app, "open", G_CALLBACK(on_open), av);
+
+    // Connect to the activation signal to initialize the UI
+    g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
+
     status = g_application_run(G_APPLICATION(app), ac, av);
+    conf_read(NULL);
+
+        switch (view_mode) {
+        case SINGLE_VIEW:
+                display_tree_part();
+                break;
+        case SPLIT_VIEW:
+                display_list();
+                break;
+        case FULL_VIEW:
+                display_tree(&rootmenu);
+                break;
+        }
 
     g_object_unref(app);
     return status;

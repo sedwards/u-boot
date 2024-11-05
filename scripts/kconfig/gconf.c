@@ -210,6 +210,7 @@ void replace_button_icon(GtkBuilder *builder, const gchar *btn_name, const gchar
 replace_button_icon_from_file(builder, "button4", "/path/to/single_view.png");
 replace_button_icon_from_file(builder, "button5", "/path/to/split_view.png");
 replace_button_icon_from_file(builder, "button6", "/path/to/tree_view.png");
+#endif
 
 void replace_button_icon_from_file(GtkBuilder *builder, gchar *btn_name, const gchar *file_path)
 {
@@ -237,12 +238,11 @@ void replace_button_icon_from_file(GtkBuilder *builder, gchar *btn_name, const g
     // Create an image widget from the GdkPixbuf and set it as the icon
     image = gtk_image_new_from_pixbuf(pixbuf);
     gtk_widget_show(image);
-    gtk_button_set_child(button, image);
+    gtk_button_set_image(button, image);
 
     // Release GdkPixbuf resource
     g_object_unref(pixbuf);
 }
-#endif
 
 void connect_signal_callback(GtkBuilder *builder, GObject *object, const gchar *signal_name,
                              const gchar *handler_name, GObject *connect_object, GConnectFlags flags, gpointer user_data)
@@ -276,8 +276,8 @@ void init_main_window(const gchar *glade_file)
 
     initialize_signals(builder);
 
-#if 0
 // Connect signals from .ui file
+/*
 widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_load"));
 g_signal_connect(widget, "activate", G_CALLBACK(on_load1_activate), NULL);
 
@@ -349,9 +349,10 @@ g_signal_connect(widget, "button_press_event", G_CALLBACK(on_treeview1_click), N
 
 widget = GTK_WIDGET(gtk_builder_get_object(builder, "treeview2"));
 g_signal_connect(widget, "cursor_changed", G_CALLBACK(on_treeview2_cursor_changed), NULL);
-//g_signal_connect(widget, "button_press_event", G_CALLBACK(on_treeview2_button_press_event), NULL);
+
+g_signal_connect(widget, "button_press_event", G_CALLBACK(on_treeview2_button_press_event), NULL);
 g_signal_connect(widget, "key_press_event", G_CALLBACK(on_treeview2_key_press), NULL);
-#endif
+*/
 
     // Retrieve widgets
     main_wnd = GTK_WIDGET(gtk_builder_get_object(builder, "window1"));
@@ -364,6 +365,7 @@ g_signal_connect(widget, "key_press_event", G_CALLBACK(on_treeview2_key_press), 
     back_btn = GTK_WIDGET(gtk_builder_get_object(builder, "button1"));
     gtk_widget_set_sensitive(back_btn, FALSE);
 
+/*
     // Set menu item states based on variables
     widget = GTK_WIDGET(gtk_builder_get_object(builder, "show_name1"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), show_name);
@@ -377,6 +379,7 @@ g_signal_connect(widget, "key_press_event", G_CALLBACK(on_treeview2_key_press), 
     save_btn = GTK_WIDGET(gtk_builder_get_object(builder, "button3"));
     save_menu_item = GTK_WIDGET(gtk_builder_get_object(builder, "save1"));
     conf_set_changed_callback(conf_changed);
+*/
 /*
     // Replace icons using GTK3-compatible function
     replace_button_icon(builder, gtk_widget_get_window(main_wnd),
@@ -387,9 +390,9 @@ g_signal_connect(widget, "key_press_event", G_CALLBACK(on_treeview2_key_press), 
                         "button6", (gchar **) xpm_tree_view);
 */
 
-replace_button_icon(builder, "button4", "view-single"); // or another appropriate icon name
-replace_button_icon(builder, "button5", "view-split");
-replace_button_icon(builder, "button6", "view-tree");
+//replace_button_icon(builder, "button4", "view-single"); // or another appropriate icon name
+//replace_button_icon(builder, "button5", "view-split");
+//replace_button_icon(builder, "button6", "view-tree");
 
 
     // Set up text buffer and tags
@@ -406,9 +409,6 @@ replace_button_icon(builder, "button6", "view-tree");
     gtk_window_set_title(GTK_WINDOW(main_wnd), rootmenu.prompt->text);
 
     gtk_widget_show(main_wnd);
-
-    // Release builder object
-    g_object_unref(builder);
 }
 
 void init_tree_model(void)
@@ -433,7 +433,7 @@ void init_tree_model(void)
 				   G_TYPE_STRING, G_TYPE_STRING,
 				   G_TYPE_STRING, G_TYPE_STRING,
 				   G_TYPE_STRING, G_TYPE_STRING,
-                                   G_TYPE_POINTER, GDK_TYPE_COLOR,
+				   G_TYPE_POINTER, GDK_TYPE_COLOR,
 				   G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF,
 				   G_TYPE_BOOLEAN, G_TYPE_BOOLEAN,
 				   G_TYPE_BOOLEAN, G_TYPE_BOOLEAN,
@@ -493,9 +493,7 @@ void init_right_tree(void)
 
 	gtk_tree_view_set_model(view, model2);
 	gtk_tree_view_set_headers_visible(view, TRUE);
-#ifdef gtk2
-	gtk_tree_view_set_rules_hint(view, TRUE);
-#endif
+
 	column = gtk_tree_view_column_new();
 	gtk_tree_view_append_column(view, column);
 	gtk_tree_view_column_set_title(column, "Options");
@@ -675,6 +673,7 @@ gboolean on_window1_delete_event(GtkWidget * widget, GdkEvent * event,
 	return FALSE;
 }
 
+#if 0
 // Function to handle clicks on tree view
 void on_treeview2_click(GtkGestureClass *gesture, int n_press, double x, double y, gpointer user_data)
 {
@@ -694,6 +693,7 @@ void on_treeview2_click(GtkGestureClass *gesture, int n_press, double x, double 
 
     gtk_tree_path_free(path);
 }
+#endif
 
 // Function to handle key press events
 gboolean on_treeview2_key_press(GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer user_data)
@@ -871,6 +871,7 @@ void on_save_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
     if (conf_write(NULL))
         text_insert_msg("Error", "Unable to save configuration!");
+    conf_write_autoconf();
 }
 
 static void
@@ -886,7 +887,7 @@ store_filename(GtkFileChooser *file_chooser, gpointer user_data)
         text_insert_msg("Error", "Unable to save configuration!");
 
     g_object_unref(fn);
-    gtk_window_close(GTK_WIDGET(user_data));
+    gtk_widget_destroy(GTK_WIDGET(user_data));
 }
 
 void on_save_as1_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -917,18 +918,6 @@ void on_save_as1_activate(GtkMenuItem *menuitem, gpointer user_data)
     g_object_unref(file);
 }
 
-void on_confirm_overwrite_response(GtkDialog *dialog, gint response_id, gpointer user_data)
-{
-    GtkFileChooser *file_chooser = GTK_FILE_CHOOSER(user_data);
-
-    if (response_id == GTK_RESPONSE_YES) {
-        store_filename(file_chooser, user_data);
-    }
-
-    gtk_widget_destroy(GTK_WIDGET(file_chooser));
-    gtk_widget_destroy(GTK_WIDGET(dialog));
-}
-
 void on_quit1_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
        if (!on_window1_delete_event(NULL, NULL, NULL))
@@ -939,13 +928,7 @@ void on_show_name1_activate(GtkMenuItem * menuitem, gpointer user_data)
 {
 	GtkTreeViewColumn *col;
 
-        /* Later gtk3 and gtk4.0 */
-	show_name = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
-
-#if 0
-        GtkToggleButton *toggle_button = GTK_TOGGLE_BUTTON(gtk_menu_item_get_child(GTK_MENU_ITEM(menuitem)));
-        gboolean is_active = gtk_toggle_button_get_active(toggle_button);
-#endif
+	show_name = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem));
 
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_NAME);
 	if (col)
@@ -956,7 +939,7 @@ void on_show_range1_activate(GtkMenuItem * menuitem, gpointer user_data)
 {
 	GtkTreeViewColumn *col;
 
-	show_range = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
+	show_range = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem));
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_NO);
 	if (col)
 		gtk_tree_view_column_set_visible(col, show_range);
@@ -973,7 +956,7 @@ void on_show_data1_activate(GtkMenuItem * menuitem, gpointer user_data)
 {
 	GtkTreeViewColumn *col;
 
-	show_value = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
+	show_value = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem));
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_VALUE);
 	if (col)
 		gtk_tree_view_column_set_visible(col, show_value);
@@ -1233,6 +1216,106 @@ static gint column2index(GtkTreeViewColumn * column)
 }
 
 
+/* User click: update choice (full) or goes down (single) */
+gboolean
+on_treeview2_button_press_event(GtkWidget * widget,
+                                GdkEventButton * event, gpointer user_data)
+{
+        GtkTreeView *view = GTK_TREE_VIEW(widget);
+        GtkTreePath *path;
+        GtkTreeViewColumn *column;
+        GtkTreeIter iter;
+        struct menu *menu;
+        gint col;
+
+        gint tx = (gint) event->x;
+        gint ty = (gint) event->y;
+        gint cx, cy;
+
+        gtk_tree_view_get_path_at_pos(view, tx, ty, &path, &column, &cx,
+                                      &cy);
+
+        if (path == NULL)
+                return FALSE;
+
+        if (!gtk_tree_model_get_iter(model2, &iter, path))
+                return FALSE;
+        gtk_tree_model_get(model2, &iter, COL_MENU, &menu, -1);
+
+        col = column2index(column);
+        if (event->type == GDK_2BUTTON_PRESS) {
+                enum prop_type ptype;
+                ptype = menu->prompt ? menu->prompt->type : P_UNKNOWN;
+
+                if (ptype == P_MENU && view_mode != FULL_VIEW && col == COL_OPTION) {
+                        // goes down into menu
+                        current = menu;
+                        display_tree_part();
+                        gtk_widget_set_sensitive(back_btn, TRUE);
+                } else if (col == COL_OPTION) {
+                        toggle_sym_value(menu);
+                        gtk_tree_view_expand_row(view, path, TRUE);
+                }
+        } else {
+                if (col == COL_VALUE) {
+                        toggle_sym_value(menu);
+                        gtk_tree_view_expand_row(view, path, TRUE);
+                } else if (col == COL_NO || col == COL_MOD
+                           || col == COL_YES) {
+                        change_sym_value(menu, col);
+                        gtk_tree_view_expand_row(view, path, TRUE);
+                }
+        }
+
+        return FALSE;
+}
+
+
+/* User click: update choice (full) or goes down (single) */
+gboolean
+on_treeview1_button_press_event(GtkWidget * widget,
+                                GdkEventButton * event, gpointer user_data)
+{
+        GtkTreeView *view = GTK_TREE_VIEW(widget);
+        GtkTreePath *path;
+        GtkTreeViewColumn *column;
+        GtkTreeIter iter;
+        struct menu *menu;
+        gint col;
+
+        gint tx = (gint) event->x;
+        gint ty = (gint) event->y;
+        gint cx, cy;
+
+        gtk_tree_view_get_path_at_pos(view, tx, ty, &path, &column, &cx,
+                                      &cy);
+
+        if (path == NULL)
+                return FALSE;
+
+        if (!gtk_tree_model_get_iter(model2, &iter, path))
+                return FALSE;
+        gtk_tree_model_get(model2, &iter, COL_MENU, &menu, -1);
+
+        if (event->type == GDK_2BUTTON_PRESS) {
+                toggle_sym_value(menu);
+                current = menu;
+                display_tree_part();
+        } else {
+                browsed = menu;
+                display_tree_part();
+        }
+
+        gtk_widget_realize(tree2_w);
+        gtk_tree_view_set_cursor(view, path, NULL, FALSE);
+        gtk_widget_grab_focus(tree2_w);
+
+        return FALSE;
+}
+
+
+
+
 // Key event handler function using GtkEventControllerKey
 gboolean on_treeview2_key_event(GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer user_data)
 {
@@ -1288,9 +1371,7 @@ gboolean on_treeview2_key_event(GtkEventControllerKey *controller, guint keyval,
     return FALSE;
 }
 
-
 /* Key pressed: update choice */
-#if 0
 void on_treeview2_click(GtkGestureClass *gesture, int n_press, double x, double y, gpointer user_data)
 {
     GtkTreeView *view = GTK_TREE_VIEW(user_data);
@@ -1339,15 +1420,18 @@ void on_treeview2_click(GtkGestureClass *gesture, int n_press, double x, double 
     gtk_tree_path_free(path);
 }
 
-// Setup function to attach GtkGestureClass to treeview2
+// Setup function to attach GtkGestureMultiPress to treeview2 in GTK3
 void setup_treeview2_click_handler(GtkWidget *treeview)
 {
-    GtkGesture *click_gesture = gtk_gesture_click_new();
+    // Create a GtkGestureMultiPress for handling click events
+    GtkGesture *click_gesture = gtk_gesture_multi_press_new(treeview);
+
+    // Set the button to be recognized (e.g., primary mouse button)
     gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click_gesture), GDK_BUTTON_PRIMARY);
+
+    // Connect the "pressed" signal to the callback function
     g_signal_connect(click_gesture, "pressed", G_CALLBACK(on_treeview2_click), treeview);
-    gtk_widget_add_controller(treeview, GTK_EVENT_CONTROLLER(click_gesture));
 }
-#endif
 
 /* Row selection changed: update help */
 void
@@ -1426,8 +1510,11 @@ static gchar **fill_row(struct menu *menu)
 	bzero(row, sizeof(row));
 
 	row[COL_OPTION] =
-	    g_strdup_printf("%s %s", menu_get_prompt(menu),
-			    sym && !sym_has_value(sym) ? "(NEW)" : "");
+            g_strdup_printf("%s %s %s %s",
+                            ptype == P_COMMENT ? "***" : "",
+                            menu_get_prompt(menu),
+                            ptype == P_COMMENT ? "***" : "",
+                            sym && !sym_has_value(sym) ? "(NEW)" : "");
 
 	if (opt_mode == OPT_ALL && !menu_is_visible(menu))
 		row[COL_COLOR] = g_strdup("DarkGray");
@@ -1874,11 +1961,11 @@ int main(int ac, char *av[])
     // Initialize GtkApplication
     app = gtk_application_new("org.example.gconfig", G_APPLICATION_HANDLES_OPEN);
 
-    // Connect to the activation signal to initialize the UI
-    g_signal_connect(app, "activate", G_CALLBACK(on_activate), av);
-
     // Connect to the open signal if files are involved
-    g_signal_connect(app, "open", G_CALLBACK(on_open), NULL);
+    g_signal_connect(app, "open", G_CALLBACK(on_open), av);
+
+    // Connect to the activation signal to initialize the UI
+    g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
 
     /* Conf setup and argument handling */
     if (ac > 1 && av[1][0] == '-') {
@@ -1934,4 +2021,15 @@ void setup_treeview1_event_handlers(GtkWidget *treeview)
     gtk_gesture_set_window(GTK_GESTURE(click_gesture), gtk_widget_get_window(treeview));
 }
 #endif
+void on_confirm_overwrite_response(GtkDialog *dialog, gint response_id, gpointer user_data)
+{
+    GtkFileChooser *file_chooser = GTK_FILE_CHOOSER(user_data);
+
+    if (response_id == GTK_RESPONSE_YES) {
+        store_filename(file_chooser, user_data);
+    }
+
+    gtk_widget_destroy(GTK_WIDGET(file_chooser)); 
+    gtk_widget_destroy(GTK_WIDGET(dialog));
+}
 

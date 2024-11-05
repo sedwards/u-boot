@@ -6,7 +6,7 @@
  *
  */
 
-#define GTK_DISABLE_DEPRECATED
+//#define GTK_DISABLE_DEPRECATED
 #define G_DISABLE_DEPRECATED 
 
 #ifdef HAVE_CONFIG_H
@@ -25,6 +25,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+
+GtkApplication *app;
 
 //#define DEBUG
 
@@ -84,6 +86,38 @@ static void update_tree(struct menu *src, GtkTreeIter * dst);
 static void set_node(GtkTreeIter * node, struct menu *menu, gchar ** row);
 static gchar **fill_row(struct menu *menu);
 static void conf_changed(void);
+
+void on_confirm_overwrite_response(GtkDialog *dialog, gint response_id, gpointer user_data);
+void on_set_option_mode2_activate(GtkMenuItem *menuitem, gpointer user_data);
+void on_save_activate(GtkMenuItem * menuitem, gpointer user_data);
+void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer user_data);
+void on_window1_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data);
+void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer user_data);
+void on_window1_destroy(GObject *object, gpointer user_data);
+void on_window1_size_request(GtkWidget *widget, gpointer user_data);
+void on_load1_activate(GtkMenuItem *menuitem, gpointer user_data);
+void on_save_activate(GtkMenuItem *menuitem, gpointer user_data);
+void on_save_as1_activate(GtkMenuItem *menuitem, gpointer user_data);
+void on_quit1_activate(GtkMenuItem *menuitem, gpointer user_data);
+void on_show_name1_activate(GtkMenuItem * menuitem, gpointer user_data);
+void on_show_range1_activate(GtkMenuItem * menuitem, gpointer user_data);
+void on_show_data1_activate(GtkMenuItem * menuitem, gpointer user_data);
+void on_introduction1_activate(GtkMenuItem * menuitem, gpointer user_data);
+void on_about1_activate(GtkMenuItem *menuitem, gpointer user_data);
+void on_license1_activate(GtkMenuItem * menuitem, gpointer user_data);
+void on_back_clicked(GtkButton * button, gpointer user_data);
+void on_load_clicked(GtkButton * button, gpointer user_data);
+void on_single_clicked(GtkButton * button, gpointer user_data);
+void on_split_clicked(GtkButton * button, gpointer user_data);
+void on_full_clicked(GtkButton * button, gpointer user_data);
+void on_collapse_clicked(GtkButton * button, gpointer user_data);
+void on_expand_clicked(GtkButton * button, gpointer user_data);
+void on_treeview2_click(GtkGestureClass *gesture, int n_press, double x, double y, gpointer user_data);
+void on_treeview2_cursor_changed(GtkTreeView * treeview, gpointer user_data);
+void on_treeview1_click(GtkGestureClass *gesture, int n_press, double x, double y, gpointer user_data);
+void on_set_option_mode1_activate(GtkMenuItem *menuitem, gpointer user_data);
+void on_set_option_mode3_activate(GtkMenuItem *menuitem, gpointer user_data);
+gboolean on_treeview2_key_press(GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer user_data);
 
 /* Helping/Debugging Functions */
 
@@ -164,13 +198,13 @@ void replace_button_icon(GtkBuilder *builder, const gchar *btn_name, const gchar
     }
 
     // Create an image widget from an icon name
-    image = gtk_image_new_from_icon_name(icon_name);
+    image = gtk_image_new_from_icon_name(icon_name, GTK_ICON_SIZE_LARGE_TOOLBAR);
     if (!image) {
         g_printerr("Failed to load icon '%s'\n", icon_name);
         return;
     }
 
-    gtk_button_set_child(button, image);
+    gtk_button_set_image(button, image);
 }
 
 #if 0
@@ -225,7 +259,82 @@ void init_main_window(const gchar *glade_file)
         g_error("GUI loading failed!\n");
 
     // Autoconnect signals
-    gtk_builder_connect_signals(builder, NULL);
+    //gtk_builder_connect_signals_full(builder, NULL);
+
+// Connect signals from .ui file
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_load"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_load1_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_save"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_save_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_save_as"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_save_as1_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_quit"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_quit1_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_show_name"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_show_name1_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_show_range"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_show_range1_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_show_data"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_show_data1_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_option_mode1"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_set_option_mode1_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_option_mode2"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_set_option_mode2_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_option_mode3"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_set_option_mode3_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_introduction"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_introduction1_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_about"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_about1_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "menuitem_license"));
+g_signal_connect(widget, "activate", G_CALLBACK(on_license1_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "window1"));
+g_signal_connect(widget, "destroy", G_CALLBACK(on_window1_destroy), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "back_button"));
+g_signal_connect(widget, "clicked", G_CALLBACK(on_back_clicked), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "load_button"));
+g_signal_connect(widget, "clicked", G_CALLBACK(on_load_clicked), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "save_button"));
+g_signal_connect(widget, "clicked", G_CALLBACK(on_save_activate), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "single_button"));
+g_signal_connect(widget, "clicked", G_CALLBACK(on_single_clicked), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "split_button"));
+g_signal_connect(widget, "clicked", G_CALLBACK(on_split_clicked), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "full_button"));
+g_signal_connect(widget, "clicked", G_CALLBACK(on_full_clicked), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "collapse_button"));
+g_signal_connect(widget, "clicked", G_CALLBACK(on_collapse_clicked), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "expand_button"));
+g_signal_connect(widget, "clicked", G_CALLBACK(on_expand_clicked), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "treeview1"));
+g_signal_connect(widget, "button_press_event", G_CALLBACK(on_treeview1_click), NULL);
+
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "treeview2"));
+g_signal_connect(widget, "cursor_changed", G_CALLBACK(on_treeview2_cursor_changed), NULL);
+//g_signal_connect(widget, "button_press_event", G_CALLBACK(on_treeview2_button_press_event), NULL);
+g_signal_connect(widget, "key_press_event", G_CALLBACK(on_treeview2_key_press), NULL);
 
     // Retrieve widgets
     main_wnd = GTK_WIDGET(gtk_builder_get_object(builder, "window1"));
@@ -323,7 +432,7 @@ void init_left_tree(void)
 
 	gtk_tree_view_set_model(view, model1);
 	gtk_tree_view_set_headers_visible(view, TRUE);
-	gtk_tree_view_set_rules_hint(view, TRUE);
+//	gtk_tree_view_set_rules_hint(view, TRUE);
 
 	column = gtk_tree_view_column_new();
 	gtk_tree_view_append_column(view, column);
@@ -504,7 +613,7 @@ static void text_insert_msg(const char *title, const char *message)
 /* Main Windows Callbacks */
 
 // Function to handle clicks on tree view
-void on_treeview2_click(GtkGestureClick *gesture, int n_press, double x, double y, gpointer user_data)
+void on_treeview2_click(GtkGestureClass *gesture, int n_press, double x, double y, gpointer user_data)
 {
     GtkTreeView *view = GTK_TREE_VIEW(user_data);
     GtkTreePath *path;
@@ -568,27 +677,28 @@ gboolean on_treeview2_key_press(GtkEventControllerKey *controller, guint keyval,
 // Setup function to attach the gesture and key event controllers
 void setup_treeview2_event_handlers(GtkWidget *treeview)
 {
-    // Create and connect the GtkGestureClick for mouse clicks
+    // Create and connect the GtkGestureClass for mouse clicks
     GtkGesture *click_gesture = gtk_gesture_click_new();
     gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click_gesture), GDK_BUTTON_PRIMARY);
     g_signal_connect(click_gesture, "pressed", G_CALLBACK(on_treeview2_click), treeview);
     gtk_widget_add_controller(treeview, GTK_EVENT_CONTROLLER(click_gesture));
 
     // Create and connect the GtkEventControllerKey for key presses
-    GtkEventController *key_controller = gtk_event_controller_key_new();
+    GtkEventController *key_controller = gtk_event_controller_key_new(treeview);
     g_signal_connect(key_controller, "key-pressed", G_CALLBACK(on_treeview2_key_press), treeview);
     gtk_widget_add_controller(treeview, GTK_EVENT_CONTROLLER(key_controller));
 }
 
 
 void on_save_activate(GtkMenuItem * menuitem, gpointer user_data);
-gboolean on_window1_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
+void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer user_data);
+
+void on_window1_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
     GtkWidget *dialog, *label;
-    gint result;
 
     if (!conf_get_changed())
-        return FALSE;
+        return;
 
     dialog = gtk_dialog_new_with_buttons("Warning!",
                                          GTK_WINDOW(main_wnd),
@@ -599,62 +709,92 @@ gboolean on_window1_delete_event(GtkWidget *widget, GdkEvent *event, gpointer us
     gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_CANCEL);
 
     label = gtk_label_new("\nSave configuration?\n");
-#ifdef less_than_gtk4
-    //gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, TRUE, TRUE, 0);
-#endif
+    gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label);
     gtk_widget_show(label);
 
-    result = gtk_dialog_run(GTK_DIALOG(dialog));
-    switch (result) {
+    // Connect to the response signal to handle button clicks asynchronously
+    g_signal_connect(dialog, "response", G_CALLBACK(on_dialog_response), NULL);
+
+    gtk_widget_show(dialog);
+}
+
+// Signal handler for dialog responses
+void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer user_data)
+{
+    switch (response_id) {
         case GTK_RESPONSE_YES:
             on_save_activate(NULL, NULL);
-            return FALSE;
+            gtk_window_close(GTK_WINDOW(dialog));
+            break;
         case GTK_RESPONSE_NO:
-            return FALSE;
+            gtk_window_close(GTK_WINDOW(dialog));
+            break;
         case GTK_RESPONSE_CANCEL:
         case GTK_RESPONSE_DELETE_EVENT:
         default:
-            //gtk_window_close(dialog);  Less than gtk4
-            return TRUE;
+            gtk_window_close(GTK_WINDOW(dialog));
+            break;
     }
-
-    return FALSE;
 }
+
 
 void on_window1_destroy(GObject *object, gpointer user_data)
 {
-    gtk_main_quit();
+//    gtk_main_quit();
+  g_application_quit(G_APPLICATION(app));
 }
 
-void on_window1_size_request(GtkWidget *widget, GtkRequisition *requisition, gpointer user_data)
+void on_window1_size_request(GtkWidget *widget, gpointer user_data)
 {
-    static gint old_h;
+    static gint old_h = 0;
     gint w, h;
 
-    if (!gtk_widget_get_window(widget))
+    // Get the allocated size of the widget
+    if (gtk_widget_get_visible(widget)) {
+        w = gtk_widget_get_allocated_width(widget);
+        h = gtk_widget_get_allocated_height(widget);
+    } else {
         gtk_window_get_default_size(GTK_WINDOW(main_wnd), &w, &h);
-    else
-        gdk_window_get_geometry(gtk_widget_get_window(widget), NULL, NULL, &w, &h);
+    }
 
-    if (h == old_h)
-        return;
-    old_h = h;
-
-    gtk_paned_set_position(GTK_PANED(vpaned), 2 * h / 3);
+    // Update position if height has changed
+    if (h != old_h) {
+        old_h = h;
+        gtk_paned_set_position(GTK_PANED(vpaned), 2 * h / 3);
+    }
 }
+
 
 /* Menu & Toolbar Callbacks */
 static void
 load_filename(GtkFileChooser *file_chooser, gpointer user_data)
 {
+    GFile *loaded_file;
     const gchar *fn;
 
-    fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(user_data));
+    // Get the GFile object for the selected file
+    loaded_file = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(user_data));
+    if (!loaded_file) {
+        text_insert_msg("Error", "No file selected!");
+        return;
+    }
 
+    // Get the file path from the GFile
+    fn = g_file_get_path(loaded_file);
+    if (!fn) {
+        text_insert_msg("Error", "Failed to get file path!");
+        g_object_unref(loaded_file);
+        return;
+    }
+
+    // Perform the file loading operation
     if (conf_read(fn))
         text_insert_msg("Error", "Unable to load configuration!");
     else
         display_tree(&rootmenu);
+
+    // Free the GFile object after use
+    g_object_unref(loaded_file);
 }
 
 void on_load1_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -667,7 +807,7 @@ void on_load1_activate(GtkMenuItem *menuitem, gpointer user_data)
                                      "_Open", GTK_RESPONSE_ACCEPT, NULL);
 
     g_signal_connect(fs, "response", G_CALLBACK(load_filename), fs);
-    g_signal_connect(fs, "response", G_CALLBACK(gtk_window_destroy), fs);
+    g_signal_connect(fs, "response", G_CALLBACK(gtk_widget_destroy), fs);
 
     gtk_widget_show(fs);
 }
@@ -682,63 +822,92 @@ static void
 store_filename(GtkFileChooser *file_chooser, gpointer user_data)
 {
     const gchar *fn;
+    GFile *file;
 
-    fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(user_data));
+    file = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(user_data));
+    fn = g_file_get_path(file);
 
     if (conf_write(fn))
         text_insert_msg("Error", "Unable to save configuration!");
 
+    g_object_unref(fn);
     gtk_window_close(GTK_WIDGET(user_data));
 }
 
 void on_save_as1_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-    GtkWidget *fs;
-
-    fs = gtk_file_chooser_dialog_new("Save file as...", 
-                                     GTK_WINDOW(main_wnd),
-                                     GTK_FILE_CHOOSER_ACTION_SAVE,
-                                     "_Cancel", GTK_RESPONSE_CANCEL,
-                                     "_Save", GTK_RESPONSE_ACCEPT, NULL);
-
-    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(fs), TRUE);
-
-    g_signal_connect(fs, "response", G_CALLBACK(store_filename), fs);
-    g_signal_connect(fs, "response", G_CALLBACK(gtk_window_destroy), fs);
-
-    gtk_widget_show(fs);
+    GtkFileChooser *file_chooser = GTK_FILE_CHOOSER(gtk_file_chooser_dialog_new("Save As",
+                                                GTK_WINDOW(main_wnd),
+                                                GTK_FILE_CHOOSER_ACTION_SAVE,
+                                                "_Cancel", GTK_RESPONSE_CANCEL,
+                                                "_Save", GTK_RESPONSE_ACCEPT,
+                                                NULL));
+    
+    GFile *file = gtk_file_chooser_get_file(file_chooser);
+    if (g_file_query_exists(file, NULL)) {
+        GtkWidget *confirm_dialog = gtk_message_dialog_new(GTK_WINDOW(file_chooser),
+            GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+            GTK_MESSAGE_QUESTION,
+            GTK_BUTTONS_YES_NO,
+            "The file already exists. Do you want to overwrite it?");
+        
+        // Connect the response handler to handle the result asynchronously
+        g_signal_connect(confirm_dialog, "response", G_CALLBACK(on_confirm_overwrite_response), file_chooser);
+        
+        gtk_widget_show(confirm_dialog);
+    } else {
+        store_filename(file_chooser, user_data);
+        gtk_widget_destroy(GTK_WIDGET(file_chooser));
+    }
+    g_object_unref(file);
 }
 
-void on_quit1_activate(GtkMenuItem * menuitem, gpointer user_data)
+void on_confirm_overwrite_response(GtkDialog *dialog, gint response_id, gpointer user_data)
 {
-	if (!on_window1_delete_event(NULL, NULL, NULL))
-		gtk_window_close(GTK_WIDGET(main_wnd));
+    GtkFileChooser *file_chooser = GTK_FILE_CHOOSER(user_data);
+
+    if (response_id == GTK_RESPONSE_YES) {
+        store_filename(file_chooser, user_data);
+    }
+
+    gtk_widget_destroy(GTK_WIDGET(file_chooser));
+    gtk_widget_destroy(GTK_WIDGET(dialog));
+}
+
+void on_quit1_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+    on_window1_delete_event(GTK_WIDGET(main_wnd), NULL, NULL);  // No return value to check
 }
 
 void on_show_name1_activate(GtkMenuItem * menuitem, gpointer user_data)
 {
 	GtkTreeViewColumn *col;
 
-	show_name = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
+//	show_name = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
+
+//        GtkToggleButton *toggle_button = GTK_TOGGLE_BUTTON(gtk_menu_item_get_child(GTK_MENU_ITEM(menuitem)));
+//        gboolean is_active = gtk_toggle_button_get_active(toggle_button);
+
+
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_NAME);
-	if (col)
-		gtk_tree_view_column_set_visible(col, show_name);
+//	if (col)
+//		gtk_tree_view_column_set_visible(col, show_name);
 }
 
 void on_show_range1_activate(GtkMenuItem * menuitem, gpointer user_data)
 {
 	GtkTreeViewColumn *col;
 
-	show_range = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
+//	show_range = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_NO);
-	if (col)
-		gtk_tree_view_column_set_visible(col, show_range);
+//	if (col)
+//		gtk_tree_view_column_set_visible(col, show_range);
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_MOD);
-	if (col)
-		gtk_tree_view_column_set_visible(col, show_range);
+//	if (col)
+//		gtk_tree_view_column_set_visible(col, show_range);
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_YES);
-	if (col)
-		gtk_tree_view_column_set_visible(col, show_range);
+//	if (col)
+//		gtk_tree_view_column_set_visible(col, show_range);
 
 }
 
@@ -746,10 +915,10 @@ void on_show_data1_activate(GtkMenuItem * menuitem, gpointer user_data)
 {
 	GtkTreeViewColumn *col;
 
-	show_value = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
+//	show_value = gtk_check_menu_item_get_active(GTK_TOGGLE_BUTTON(menuitem));
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(tree2_w), COL_VALUE);
-	if (col)
-		gtk_tree_view_column_set_visible(col, show_value);
+//	if (col)
+//		gtk_tree_view_column_set_visible(col, show_value);
 }
 
 void
@@ -801,9 +970,9 @@ void on_introduction1_activate(GtkMenuItem * menuitem, gpointer user_data)
 					GTK_MESSAGE_INFO,
 					GTK_BUTTONS_CLOSE, "%s", intro_text);
 	g_signal_connect_swapped(G_OBJECT(dialog), "response",
-				 G_CALLBACK(gtk_window_destroy),
+				 G_CALLBACK(gtk_widget_destroy),
 				            dialog);
-	gtk_widget_show_all(dialog);
+	gtk_widget_show(dialog);
 }
 
 void on_about1_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -819,9 +988,9 @@ void on_about1_activate(GtkMenuItem *menuitem, gpointer user_data)
                                     GTK_BUTTONS_CLOSE, "%s", about_text);
 
     g_signal_connect_swapped(G_OBJECT(dialog), "response",
-                             G_CALLBACK(gtk_window_destroy),
+                             G_CALLBACK(gtk_widget_destroy),
                              dialog);
-    gtk_widget_show_all(dialog);
+    gtk_widget_show(dialog);
 }
 
 void on_license1_activate(GtkMenuItem * menuitem, gpointer user_data)
@@ -837,9 +1006,9 @@ void on_license1_activate(GtkMenuItem * menuitem, gpointer user_data)
 					GTK_MESSAGE_INFO,
 					GTK_BUTTONS_CLOSE, "%s", license_text);
 	g_signal_connect_swapped(G_OBJECT(dialog), "response",
-				 G_CALLBACK(gtk_window_destroy),
+				 G_CALLBACK(gtk_widget_destroy),
 				            dialog);
-	gtk_widget_show_all(dialog);
+	gtk_widget_show(dialog);
 }
 
 void on_back_clicked(GtkButton * button, gpointer user_data)
@@ -1006,52 +1175,65 @@ static gint column2index(GtkTreeViewColumn * column)
 }
 
 
-/* Key pressed: update choice */
-#if 0
-gboolean
-on_treeview2_key_press_event(GtkWidget * widget,
-			     GdkEventKey * event, gpointer user_data)
+// Key event handler function using GtkEventControllerKey
+gboolean on_treeview2_key_event(GtkEventControllerKey *controller, guint keyval, guint keycode, GdkModifierType state, gpointer user_data)
 {
-	GtkTreeView *view = GTK_TREE_VIEW(widget);
-	GtkTreePath *path;
-	GtkTreeViewColumn *column;
-	GtkTreeIter iter;
-	struct menu *menu;
-	gint col;
+    GtkTreeView *view = GTK_TREE_VIEW(user_data);
+    GtkTreePath *path;
+    GtkTreeViewColumn *column;
+    GtkTreeIter iter;
+    struct menu *menu;
+    gint col;
 
-	gtk_tree_view_get_cursor(view, &path, &column);
-	if (path == NULL)
-		return FALSE;
+    // Get the current cursor path
+    gtk_tree_view_get_cursor(view, &path, &column); 
+    if (path == NULL)
+        return FALSE;
 
-	if (event->keyval == GDK_KEY_space) {
-		if (gtk_tree_view_row_expanded(view, path))
-			gtk_tree_view_collapse_row(view, path);
-		else
-			gtk_tree_view_expand_row(view, path, FALSE);
-		return TRUE;
-	}
-	if (event->keyval == GDK_KEY_KP_Enter) {
-	}
-	if (widget == tree1_w)
-		return FALSE;
+    // Handle space and enter keys for expanding and collapsing rows
+    if (keyval == GDK_KEY_space) {
+        if (gtk_tree_view_row_expanded(view, path))
+            gtk_tree_view_collapse_row(view, path);
+        else
+            gtk_tree_view_expand_row(view, path, FALSE);
+        gtk_tree_path_free(path);  // Free the path object after use
+        return TRUE;
+    }
+    if (keyval == GDK_KEY_KP_Enter) {
+        // Handle Enter key functionality if needed
+    }
 
-	gtk_tree_model_get_iter(model2, &iter, path);
-	gtk_tree_model_get(model2, &iter, COL_MENU, &menu, -1);
+    if (view == GTK_TREE_VIEW(tree1_w)) {
+        gtk_tree_path_free(path);  // Free the path object after use
+        return FALSE;
+    }
 
-	if (!strcasecmp(event->string, "n"))
-		col = COL_NO;
-	else if (!strcasecmp(event->string, "m"))
-		col = COL_MOD;
-	else if (!strcasecmp(event->string, "y"))
-		col = COL_YES;
-	else
-		col = -1;
-	change_sym_value(menu, col);
+    // Retrieve the current selection and menu item associated with it
+    gtk_tree_model_get_iter(model2, &iter, path);
+    gtk_tree_model_get(model2, &iter, COL_MENU, &menu, -1);
 
-	return FALSE;
+    // Check for character key inputs 'n', 'm', and 'y' and map to columns
+    if (keyval == gdk_keyval_from_name("n"))
+        col = COL_NO;
+    else if (keyval == gdk_keyval_from_name("m"))
+        col = COL_MOD;
+    else if (keyval == gdk_keyval_from_name("y"))
+        col = COL_YES;
+    else
+        col = -1;
+
+    if (col != -1) {
+        change_sym_value(menu, col);
+    }
+
+    gtk_tree_path_free(path);  // Free the path object after use
+    return FALSE;
 }
 
-void on_treeview2_click(GtkGestureClick *gesture, int n_press, double x, double y, gpointer user_data)
+
+/* Key pressed: update choice */
+#if 0
+void on_treeview2_click(GtkGestureClass *gesture, int n_press, double x, double y, gpointer user_data)
 {
     GtkTreeView *view = GTK_TREE_VIEW(user_data);
     GtkTreePath *path;
@@ -1099,7 +1281,7 @@ void on_treeview2_click(GtkGestureClick *gesture, int n_press, double x, double 
     gtk_tree_path_free(path);
 }
 
-// Setup function to attach GtkGestureClick to treeview2
+// Setup function to attach GtkGestureClass to treeview2
 void setup_treeview2_click_handler(GtkWidget *treeview)
 {
     GtkGesture *click_gesture = gtk_gesture_click_new();
@@ -1124,8 +1306,8 @@ on_treeview2_cursor_changed(GtkTreeView * treeview, gpointer user_data)
 	}
 }
 
-// Callback function for GtkGestureClick to handle button presses on the tree view
-void on_treeview1_click(GtkGestureClick *gesture, int n_press, double x, double y, gpointer user_data)
+// Callback function for GtkGestureClass to handle button presses on the tree view
+void on_treeview1_click(GtkGestureClass *gesture, int n_press, double x, double y, gpointer user_data)
 {
     GtkTreeView *view = GTK_TREE_VIEW(user_data);
     GtkTreePath *path;
@@ -1161,7 +1343,7 @@ void on_treeview1_click(GtkGestureClick *gesture, int n_press, double x, double 
     gtk_tree_path_free(path);
 }
 
-// Setup function to attach GtkGestureClick to treeview1 for click handling
+// Setup function to attach GtkGestureClass to treeview1 for click handling
 void setup_treeview1_event_handlers(GtkWidget *treeview)
 {
     GtkGesture *click_gesture = gtk_gesture_click_new();
@@ -1305,7 +1487,7 @@ static void set_node(GtkTreeIter * node, struct menu *menu, gchar ** row)
 	pix = gdk_pixbuf_new_from_xpm_data((const char **)
 					   row[COL_PIXBUF]);
 
-	gdk_color_parse(row[COL_COLOR], &color);
+	//gdk_color_parse(row[COL_COLOR], &color);
 
 // Define the color (example: setting to red)
 //gdk_rgba_parse(&color, "#FF0000");
@@ -1577,72 +1759,95 @@ void fixup_rootmenu(struct menu *menu)
 	}
 }
 
-/* Main */
+#include <gtk/gtk.h>
+
+// Function to initialize the main window and setup UI components
+static void on_activate(GApplication *app, gpointer user_data)
+{
+    const char *name;
+    char *env;
+    gchar *glade_file;
+
+    /* Determine GUI path */
+    env = getenv(SRCTREE);
+    if (env)
+        glade_file = g_strconcat(env, "/scripts/kconfig/gconf.ui", NULL);
+    else if (((char **)user_data)[0][0] == '/')
+        glade_file = g_strconcat(((char **)user_data)[0], ".ui", NULL);
+    else
+        glade_file = g_strconcat(g_get_current_dir(), "/", ((char **)user_data)[0], ".ui", NULL);
+
+    /* Load the interface and connect signals */
+    init_main_window(glade_file);
+    init_tree_model();
+    init_left_tree();
+    init_right_tree();
+
+    /* Display view based on mode */
+    switch (view_mode) {
+    case SINGLE_VIEW:
+        display_tree_part();
+        break;
+    case SPLIT_VIEW:
+        display_list();
+        break;
+    case FULL_VIEW:
+        display_tree(&rootmenu);
+        break;
+    }
+
+    g_free(glade_file);
+}
+
+void on_open(GApplication *app, GFile **files, gint n_files, gchar *hint)
+{
+    // Optionally print or log that open was called
+    g_print("on_open called but not handling files directly.\n");
+    g_application_activate(app);  // Activate the main window
+}
+
 int main(int ac, char *av[])
 {
-	const char *name;
-	char *env;
-	gchar *glade_file;
+    int status;
+    const char *name = NULL; // Declare name at the start
 
-	/* GTK stuffs */
-//	gtk_init(&ac, &av);
-	gtk_init();
+    // Initialize GtkApplication
+    app = gtk_application_new("org.example.gconfig", G_APPLICATION_HANDLES_OPEN);
 
-	//add_pixmap_directory (PACKAGE_DATA_DIR "/" PACKAGE "/pixmaps");
-	//add_pixmap_directory (PACKAGE_SOURCE_DIR "/pixmaps");
+    // Connect to the activation signal to initialize the UI
+    g_signal_connect(app, "activate", G_CALLBACK(on_activate), av);
 
-	/* Determine GUI path */
-	env = getenv(SRCTREE);
-	if (env)
-		glade_file = g_strconcat(env, "/scripts/kconfig/gconf.ui", NULL);
-	else if (av[0][0] == '/')
-		glade_file = g_strconcat(av[0], ".ui", NULL);
-	else
-		glade_file = g_strconcat(g_get_current_dir(), "/", av[0], ".ui", NULL);
+    // Connect to the open signal if files are involved
+    g_signal_connect(app, "open", G_CALLBACK(on_open), NULL);
 
-	/* Conf stuffs */
-	if (ac > 1 && av[1][0] == '-') {
-		switch (av[1][1]) {
-		case 'a':
-			//showAll = 1;
-			break;
-		case 's':
-			conf_set_message_callback(NULL);
-			break;
-		case 'h':
-		case '?':
-			printf("%s [-s] <config>\n", av[0]);
-			exit(0);
-		}
-		name = av[2];
-	} else
-		name = av[1];
+    /* Conf setup and argument handling */
+    if (ac > 1 && av[1][0] == '-') {
+        switch (av[1][1]) {
+        case 'a':
+            // showAll = 1;
+            break;
+        case 's':
+            conf_set_message_callback(NULL);
+            break;
+        case 'h':
+        case '?':
+            printf("%s [-s] <config>\n", av[0]);
+            return 0;
+        }
+        name = av[2];
+    } else {
+        name = av[1];
+    }
 
-	conf_parse(name);
-	fixup_rootmenu(&rootmenu);
-	conf_read(NULL);
+    conf_parse(name);
+    fixup_rootmenu(&rootmenu);
+    conf_read(NULL);
 
-	/* Load the interface and connect signals */
-	init_main_window(glade_file);
-	init_tree_model();
-	init_left_tree();
-	init_right_tree();
+    // Run the application
+    status = g_application_run(G_APPLICATION(app), ac, av);
 
-	switch (view_mode) {
-	case SINGLE_VIEW:
-		display_tree_part();
-		break;
-	case SPLIT_VIEW:
-		display_list();
-		break;
-	case FULL_VIEW:
-		display_tree(&rootmenu);
-		break;
-	}
-
-	gtk_main();
-
-	return 0;
+    g_object_unref(app);
+    return status;
 }
 
 static void conf_changed(void)

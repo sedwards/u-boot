@@ -354,6 +354,9 @@ g_signal_connect(widget, "button_press_event", G_CALLBACK(on_treeview2_button_pr
 g_signal_connect(widget, "key_press_event", G_CALLBACK(on_treeview2_key_press), NULL);
 */
 
+widget = GTK_WIDGET(gtk_builder_get_object(builder, "window1"));
+g_signal_connect(widget, "destroy", G_CALLBACK(on_window1_delete_event), NULL);
+
     // Retrieve widgets
     main_wnd = GTK_WIDGET(gtk_builder_get_object(builder, "window1"));
     hpaned = GTK_WIDGET(gtk_builder_get_object(builder, "hpaned1"));
@@ -1938,6 +1941,7 @@ void on_open(GApplication *app, GFile **files, gint n_files, gchar *hint)
     g_application_activate(app);  // Activate the main window
 }
 
+#if 0
 int main(int ac, char *av[])
 {
     int status;
@@ -1964,9 +1968,30 @@ int main(int ac, char *av[])
         name = av[1];
     }
 
+    char *env;
+    gchar *glade_file;
+    
+    /* Determine GUI path */
+    env = getenv(SRCTREE);
+    if (env)
+        glade_file = g_strconcat(env, "/scripts/kconfig/gconf.ui", NULL);
+    else if (((char **)user_data)[0][0] == '/')
+        glade_file = g_strconcat(((char **)user_data)[0], ".ui", NULL);
+    else
+        glade_file = g_strconcat(g_get_current_dir(), "/", ((char **)user_data)[0], ".ui", NULL);
+
     conf_parse(name);
     fixup_rootmenu(&rootmenu);
 
+        /* Load the interface and connect signals */
+        init_main_window(glade_file);
+        init_tree_model();
+        init_left_tree();
+        init_right_tree();
+
+        conf_read(NULL);
+
+/*
     // Run the application
     // Initialize GtkApplication
     app = gtk_application_new("org.example.gconfig", G_APPLICATION_HANDLES_OPEN);
@@ -1979,6 +2004,7 @@ int main(int ac, char *av[])
 
     status = g_application_run(G_APPLICATION(app), ac, av);
     conf_read(NULL);
+*/
 
         switch (view_mode) {
         case SINGLE_VIEW:
@@ -1995,6 +2021,73 @@ int main(int ac, char *av[])
     g_object_unref(app);
     return status;
 }
+#endif
+
+int main(int ac, char *av[])
+{
+        const char *name;
+        char *env;
+        gchar *glade_file;
+
+        /* GTK stuffs */
+        gtk_init(&ac, &av);
+
+        /* Determine GUI path */
+        env = getenv(SRCTREE);
+        if (env)
+                glade_file = g_strconcat(env, "/scripts/kconfig/gconf.ui", NULL);
+        else if (av[0][0] == '/')
+                glade_file = g_strconcat(av[0], ".ui", NULL);
+        else
+                glade_file = g_strconcat(g_get_current_dir(), "/", av[0], ".ui", NULL);
+
+        /* Conf stuffs */
+        if (ac > 1 && av[1][0] == '-') {
+                switch (av[1][1]) {
+                case 'a':
+                        //showAll = 1;
+                        break;
+                case 's':
+                        conf_set_message_callback(NULL);
+                        break;
+                case 'h':
+                case '?':
+                        printf("%s [-s] <config>\n", av[0]);
+                        exit(0);
+                }
+                name = av[2];
+        } else
+                name = av[1];
+
+        conf_parse(name);
+        fixup_rootmenu(&rootmenu);
+
+        /* Load the interface and connect signals */
+        init_main_window(glade_file);
+        init_tree_model();
+        init_left_tree();
+        init_right_tree();
+
+        conf_read(NULL);
+
+        switch (view_mode) {
+        case SINGLE_VIEW:
+                display_tree_part();
+                break;
+        case SPLIT_VIEW:
+                display_list();
+                break;
+        case FULL_VIEW:
+                display_tree(&rootmenu);
+                break;
+        }
+
+        gtk_main();
+
+        return 0;
+}
+
+
 
 static void conf_changed(void)
 {

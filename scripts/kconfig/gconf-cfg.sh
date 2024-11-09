@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0
 
 PKG_GTK4="gtk4"
-PKG_GTK3="gtk+-3.0"
+PKG_GTK3="gtk+-3.0 gtk-mac-integration-gtk3"
 PKG_GTK2="gtk+-2.0 gmodule-2.0 libglade-2.0"
 
 # Check for pkg-config availability
